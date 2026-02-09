@@ -2,8 +2,14 @@ import { z } from "zod";
 import { ToolsSchema } from "./zod-schema.agent-runtime.js";
 import { AgentsSchema, AudioSchema, BindingsSchema, BroadcastSchema } from "./zod-schema.agents.js";
 import { ApprovalsSchema } from "./zod-schema.approvals.js";
+import {
+  ConcurrencySettingsSchema,
+  ChannelConcurrencyLimitsSchema,
+  AgentConcurrencySettingsSchema,
+} from "./zod-schema.concurrency.js";
 import { HexColorSchema, ModelsConfigSchema } from "./zod-schema.core.js";
 import { HookMappingSchema, HooksGmailSchema, InternalHooksSchema } from "./zod-schema.hooks.js";
+import { PermissionSettingsSchema, PermissionBindingSchema } from "./zod-schema.permissions.js";
 import { ChannelsSchema } from "./zod-schema.providers.js";
 import {
   CommandsSchema,
@@ -594,6 +600,11 @@ export const OpenClawSchema = z
       })
       .strict()
       .optional(),
+    permissions: PermissionSettingsSchema.optional(),
+    permissionBindings: z.array(PermissionBindingSchema).optional(),
+    concurrency: ConcurrencySettingsSchema.optional(),
+    channelConcurrency: z.array(ChannelConcurrencyLimitsSchema).optional(),
+    agentConcurrency: z.array(AgentConcurrencySettingsSchema).optional(),
   })
   .strict()
   .superRefine((cfg, ctx) => {

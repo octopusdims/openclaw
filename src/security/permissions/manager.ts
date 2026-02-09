@@ -188,11 +188,11 @@ export class PermissionManager {
       }
     }
 
-    // No matching grant found
+    // No matching grant found - deny by default
     return {
-      allowed: !this.config.requireExplicit,
+      allowed: false,
       explicitlyDenied: false,
-      reason: this.config.requireExplicit ? "No explicit permission granted" : undefined,
+      reason: "Permission not granted",
     };
   }
 
@@ -344,7 +344,7 @@ export class PermissionManager {
     if (!userPerms) {
       userPerms = {
         userId,
-        roles: [this.config.defaultRole],
+        roles: [],
         directGrants: [],
         assignedAt: Date.now(),
         assignedBy,
@@ -429,8 +429,7 @@ export class PermissionManager {
   getUserRoles(userId: string): Role[] {
     const userPerms = this.userPermissions.get(userId);
     if (!userPerms) {
-      const defaultRole = this.roles.get(this.config.defaultRole);
-      return defaultRole ? [defaultRole] : [];
+      return [];
     }
 
     return userPerms.roles

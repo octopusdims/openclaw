@@ -298,6 +298,7 @@ export class TaskScheduler extends EventEmitter {
    * Get next task for execution (called by executor)
    */
   next(): Task | undefined {
+    if (this.paused) return undefined;
     if (this.queue.length === 0) return undefined;
 
     // Check concurrency limits
@@ -370,6 +371,20 @@ export class TaskScheduler extends EventEmitter {
   }
 
   private paused = false;
+
+  /**
+   * Check if scheduler is paused
+   */
+  isPaused(): boolean {
+    return this.paused;
+  }
+
+  /**
+   * Get global concurrency limit
+   */
+  getGlobalLimit(): number {
+    return this.limiterConfig.globalLimit;
+  }
 
   /**
    * Clear all queued tasks

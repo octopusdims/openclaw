@@ -314,10 +314,10 @@ describe("Permission Guards", () => {
     });
 
     it("should check any permission", () => {
-      const guard = createGuard({ userId: "user1" }, { permissionManager: pm });
+      const guard = createGuard({ userId: "user1", channelId: "ch1" }, { permissionManager: pm });
 
       const result = guard.checkAny(["command:bash", "command:execute"]);
-      expect(result.allowed).toBe(true); // command:execute is allowed for user
+      expect(result.allowed).toBe(true); // command:execute is allowed for user in channel scope
     });
 
     it("should check all permissions", () => {

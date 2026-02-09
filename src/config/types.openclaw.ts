@@ -4,6 +4,11 @@ import type { AuthConfig } from "./types.auth.js";
 import type { DiagnosticsConfig, LoggingConfig, SessionConfig, WebConfig } from "./types.base.js";
 import type { BrowserConfig } from "./types.browser.js";
 import type { ChannelsConfig } from "./types.channels.js";
+import type {
+  ConcurrencySettings,
+  ChannelConcurrencyLimits,
+  AgentConcurrencySettings,
+} from "./types.concurrency.js";
 import type { CronConfig } from "./types.cron.js";
 import type {
   CanvasHostConfig,
@@ -21,6 +26,7 @@ import type {
 } from "./types.messages.js";
 import type { ModelsConfig } from "./types.models.js";
 import type { NodeHostConfig } from "./types.node-host.js";
+import type { PermissionSettings, PermissionBinding } from "./types.permissions.js";
 import type { PluginsConfig } from "./types.plugins.js";
 import type { SkillsConfig } from "./types.skills.js";
 import type { ToolsConfig } from "./types.tools.js";
@@ -97,6 +103,11 @@ export type OpenClawConfig = {
   talk?: TalkConfig;
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
+  permissions?: PermissionSettings;
+  permissionBindings?: PermissionBinding[];
+  concurrency?: ConcurrencySettings;
+  channelConcurrency?: ChannelConcurrencyLimits[];
+  agentConcurrency?: AgentConcurrencySettings[];
 };
 
 export type ConfigValidationIssue = {

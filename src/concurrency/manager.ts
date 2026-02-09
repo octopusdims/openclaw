@@ -82,6 +82,55 @@ export class ConcurrencyManager extends EventEmitter {
     }
 
     this.running = true;
+
+    // Start background task processor if not using worker pool
+    if (!this.workerPool) {
+      this.startTaskProcessor();
+    }
+  }
+
+  private taskProcessorInterval?: NodeJS.Timeout;
+  private activeExecutions = new Set<string>();
+
+  /**
+   * Start background task processor
+   */
+  private startTaskProcessor(): void {
+    const processTasks = async () => {
+      if (!this.running || this.scheduler.isPaused()) return;
+
+      // Try to start new tasks up to the global limit
+      while (this.activeExecutions.size < this.scheduler.getGlobalLimit()) {
+        const task = this.scheduler.next();
+        if (!task) break;
+
+        const handler = this.handlers.get(task.type);
+        if (!handler) {
+          this.scheduler.markFailed(task.id, new Error(`No handler for type: ${task.type}`));
+          continue;
+        }
+
+        const taskId = task.id;
+        this.scheduler.markStarted(taskId);
+        this.activeExecutions.add(taskId);
+
+        // Execute task asynchronously
+        (async () => {
+          try {
+            const result = await handler(task);
+            this.scheduler.markCompleted(taskId, result);
+          } catch (error) {
+            this.scheduler.markFailed(taskId, error as Error);
+          } finally {
+            this.activeExecutions.delete(taskId);
+          }
+        })();
+      }
+    };
+
+    // Process tasks immediately and then periodically
+    processTasks();
+    this.taskProcessorInterval = setInterval(processTasks, 5);
   }
 
   /**
@@ -136,7 +185,7 @@ export class ConcurrencyManager extends EventEmitter {
       return this.workerPool.submit(task);
     }
 
-    // Otherwise use scheduler + inline execution
+    // Otherwise use scheduler - background processor will execute it
     return this.scheduler.schedule(task);
   }
 
@@ -283,12 +332,9 @@ export class ConcurrencyManager extends EventEmitter {
 
       // Wait for slot when at concurrency limit
       if (executing.length >= maxConcurrency) {
-        await Promise.race(executing);
-        // Remove completed promises
-        const index = executing.findIndex((p) => p === promise);
-        if (index !== -1) {
-          executing.splice(index, 1);
-        }
+        // Wait for any promise to complete, then remove completed ones
+        const completedPromise = await Promise.race(executing.map((p, idx) => p.then(() => idx)));
+        executing.splice(completedPromise, 1);
       }
     }
 
@@ -361,6 +407,10 @@ export class ConcurrencyManager extends EventEmitter {
 
     if (this.metricsInterval) {
       clearInterval(this.metricsInterval);
+    }
+
+    if (this.taskProcessorInterval) {
+      clearInterval(this.taskProcessorInterval);
     }
 
     await this.scheduler.clear(true);
